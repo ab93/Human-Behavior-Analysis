@@ -37,11 +37,8 @@ def generate_segment_features(measure='mean'):
     if measure == 'std':
         func = np.std
 
-    #for filename in os.listdir('../features/VisualFeatures/'):
     for vid_idx in range(1,49):
         seg_df = pd.DataFrame()
-        #patt = re.compile(r'_okao_output')
-        #m = patt.search(filename)
         filename = 'video' + get_id(vid_idx) + '_okao_output.txt'
 
         df = parse(os.path.join('../features/VisualFeatures/', filename))
