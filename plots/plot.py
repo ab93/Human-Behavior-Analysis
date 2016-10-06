@@ -18,6 +18,8 @@ def calculate_anova(x,y,feature_name):
     classes = map(np.int,classes)
 
     z = pd.concat([x,y], axis=1)
+    z = z.replace([np.inf, -np.inf], np.nan)
+    z = z.dropna()
     z = z.groupby(by='majority vote')
 
     data = []
@@ -35,6 +37,7 @@ def plot_box(x,y,feature_name):
     classes = map(np.int,classes)
 
     z = pd.concat([x,y], axis=1)
+
     z = z.groupby(by='majority vote')
 
     data = []
