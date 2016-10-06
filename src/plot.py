@@ -5,7 +5,7 @@ import sys
 from scipy import stats
 
 def get_data(feature_file, feature_name):
-    excel_df = pd.read_excel(open('../Assignment_1/sentimentAnnotations_rev_v03.xlsx','rb'),
+    excel_df = pd.read_excel(open('../../Assignment_1/sentimentAnnotations_rev_v03.xlsx','rb'),
                             sheetname='Sheet1')
     excel_df = excel_df['majority vote']
     feat_df = pd.read_csv(feature_file)
@@ -19,7 +19,7 @@ def calculate_anova(x,y,feature_name):
 
     z = pd.concat([x,y], axis=1)
     z = z.replace([np.inf, -np.inf], np.nan)
-    z = z.dropna()
+    z = pd.concat([x,y], axis=1)
     z = z.groupby(by='majority vote')
 
     data = []
@@ -28,7 +28,9 @@ def calculate_anova(x,y,feature_name):
         data.append(temp_df.iloc[:,0].values)
 
     f_val, p_val = stats.f_oneway(data[0], data[1], data[2])
-    print f_val, p_val
+    print p_val
+    with open('../results/anova.dat', 'a+') as f:
+        f.write(feature_name + '\t' + str(p_val) + '\n')
 
 
 def plot_box(x,y,feature_name):
@@ -37,7 +39,8 @@ def plot_box(x,y,feature_name):
     classes = map(np.int,classes)
 
     z = pd.concat([x,y], axis=1)
-
+    z = z.replace([np.inf, -np.inf], np.nan)
+    z = z.dropna()
     z = z.groupby(by='majority vote')
 
     data = []
@@ -55,30 +58,24 @@ def plot_box(x,y,feature_name):
 
     for box in bp['boxes']:
         box.set(color='red', linewidth=2)
-    # change fill color
-        #box.set( facecolor = '#1b9e77' )
 
-    ## change color and linewidth of the whiskers
     for whisker in bp['whiskers']:
         whisker.set(color='black', linewidth=2)
 
-    ## change color and linewidth of the caps
     for cap in bp['caps']:
         cap.set(color='black', linewidth=2)
 
-    ## change color and linewidth of the medians
     for median in bp['medians']:
         median.set(color='blue', linewidth=2)
 
-    ## change the style of fliers and their fill
     for flier in bp['fliers']:
         flier.set(marker='o', color='#e7298a', alpha=0.5)
-    fig.savefig(feature_name + '.png')
+    fig.savefig('../plots/' + feature_name + '.png')
 
 
 if __name__ == '__main__':
     feature_name = sys.argv[2]
     feature_file = sys.argv[1]
     feat_df, excel_df = get_data(feature_file, feature_name)
-    #plot_box(feat_df, excel_df, feature_name)
+    plot_box(feat_df, excel_df, feature_name)
     calculate_anova(feat_df, excel_df, feature_name)
