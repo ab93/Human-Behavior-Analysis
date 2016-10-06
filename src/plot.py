@@ -19,7 +19,7 @@ def calculate_anova(x,y,feature_name):
 
     z = pd.concat([x,y], axis=1)
     z = z.replace([np.inf, -np.inf], np.nan)
-    z = pd.concat([x,y], axis=1)
+    z = z.dropna()
     z = z.groupby(by='majority vote')
 
     data = []
