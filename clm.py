@@ -97,9 +97,9 @@ for i in range(0,len(table.index)):
     vi_std.write(",")
     for head in headers[1:-1]:
         #print temp[head].mean()
-        vi_mean.write(str(temp[head].mean()))
+        vi_mean.write(str(temp[head].dropna().mean()))
         vi_mean.write(",")
-        vi_std.write(str(temp[head].std()))
+        vi_std.write(str(temp[head].dropna().std()))
         vi_std.write(",")
     vi_mean.write(str(pol))
     vi_mean.write("\n")
@@ -112,9 +112,9 @@ for i in range(0,len(table.index)):
     ac_std.write(",")
     for head in headers_ac:
         # print temp[head].mean()
-        ac_mean.write(str(temp[head].mean()))
+        ac_mean.write(str(temp[head].dropna().mean()))
         ac_mean.write(",")
-        ac_std.write(str(temp[head].std()))
+        ac_std.write(str(temp[head].dropna().std()))
         ac_std.write(",")
     ac_mean.write(str(pol))
     ac_mean.write("\n")
