@@ -1,0 +1,8 @@
+feature_name	t_test_neg_neu	t_test_neu_pos	t_test_neg_pos
+mouth_open	Ttest_indResult(statistic=-2.5622220080691229, pvalue=0.011175491652108299)	Ttest_indResult(statistic=-0.36532949683931687, pvalue=0.71530916596787675)	Ttest_indResult(statistic=-3.0167867470554413, pvalue=0.0029045453308811572)
+smile_level	Ttest_indResult(statistic=-0.80220929846511413, pvalue=0.42343413062580837)	Ttest_indResult(statistic=0.094421462784007926, pvalue=0.92488301072588286)	Ttest_indResult(statistic=-0.67229771176548747, pvalue=0.50221092050267968)
+energy	Ttest_indResult(statistic=2.3279790407531658, pvalue=0.020971533371059396)	Ttest_indResult(statistic=-1.141017437576261, pvalue=0.25543968508741888)	Ttest_indResult(statistic=1.1540402690596874, pvalue=0.24994859385939991)
+frequency	Ttest_indResult(statistic=0.16291116404368505, pvalue=0.87076152049330768)	Ttest_indResult(statistic=-1.1098577703601458, pvalue=0.26859179734695959)	Ttest_indResult(statistic=-1.0394770250334899, pvalue=0.29990391413354828)
+naq	Ttest_indResult(statistic=-3.4934884413063072, pvalue=0.00059307710101813083)	Ttest_indResult(statistic=-0.22806888097914277, pvalue=0.81986048394993105)	Ttest_indResult(statistic=-3.8572726766726304, pvalue=0.00015691855231273624)
+face_up_down	Ttest_indResult(statistic=0.12182890698266427, pvalue=0.90316327432608723)	Ttest_indResult(statistic=0.35677375579041271, pvalue=0.72169347044247267)	Ttest_indResult(statistic=0.49450791911402275, pvalue=0.62151880108602453)
+right_eye_open	Ttest_indResult(statistic=-0.75174491936100962, pvalue=0.45313466121694079)	Ttest_indResult(statistic=-1.2621007411046012, pvalue=0.20860161787997261)	Ttest_indResult(statistic=-2.1320718523334632, pvalue=0.034285261078931498)
