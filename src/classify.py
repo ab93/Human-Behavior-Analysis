@@ -49,37 +49,46 @@ def fuse_features():
 
 def get_values(training_set,validation_set,test_set):
     
-    #validation accuracy
+    #find value of C
+
     training_data = training_set[:,:-1]
     training_labels = training_set[:,-1]
     validation_data = validation_set[:,:-1]
     validation_labels = validation_set[:,-1]
+    testing_data = test_set[:,:-1]
+    testing_labels = test_set[:,-1]
     params = {'C': [0.001,0.01,1,10,100]}
     data = np.concatenate((training_data, validation_data), axis=0)
     labels = np.concatenate([training_labels, validation_labels])
     train_indices = range(len(training_data))
     validation_indices = range(len(training_data),len(validation_data)+len(training_data))
-    print train_indices, validation_indices
-    print len(training_data),len(validation_data)
-    print len(data),len(labels)
-    print data.shape,labels.shape
-    clf_validation = svm.SVC(C=1,decision_function_shape='ovo',kernel='linear')
-    grid_clf = GridSearchCV(estimator=clf_validation, param_grid=params,cv=zip(train_indices,validation_indices))
+    # print train_indices, validation_indices
+    # print len(training_data),len(validation_data)
+    # print len(data),len(labels)
+    # print data.shape,labels.shape
+    clf_find_c = svm.SVC(decision_function_shape='ovr',kernel='linear')
+    grid_clf = GridSearchCV(estimator=clf_find_c, param_grid=params,cv=[(train_indices,validation_indices)])
     grid_clf.fit(data,labels)
     c = grid_clf.best_estimator_.C
+    print c
 
-
-    '''
-    #training accuracy
-    clf_training = svm.SVC(decision_function_shape='ovr',kernel='linear',C=c)
-    clf_training.fit(training_set[:,:-1], training_set[:,-1])
-    training_accuracy = clf_training.score(training_set[:,:-1], training_set[:,-1])
+    #train accuracy
+    best_clf = svm.SVC(C=c,decision_function_shape='ovr',kernel='linear')
+    best_clf.fit(data,labels)
+    training_accuracy = best_clf.score(data,labels)
     print training_accuracy
 
+    #validation accuracy
+
+    validation_accuracy = best_clf.score(validation_data,validation_labels)
+    print validation_accuracy
+
+
     #test accuracy
-    testing_accuracy = clf_training.score(test_set[:,:-1],test_set[:,-1])
+
+    testing_accuracy = best_clf.score(testing_data,testing_labels)
     print testing_accuracy
-    '''
+
 
 def model():
     df = fuse_features()
