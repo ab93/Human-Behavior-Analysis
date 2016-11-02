@@ -50,15 +50,24 @@ def fuse_features():
 def get_values(training_set,validation_set,test_set):
     
     #validation accuracy
+    training_data = training_set[:,:-1]
+    training_labels = training_set[:,-1]
+    validation_data = validation_set[:,:-1]
+    validation_labels = validation_set[:,-1]
     params = {'C': [0.001,0.01,1,10,100]}
-    clf_validation = svm.SVC(decision_function_shape='ovr',kernel='linear')
-    grid_clf = GridSearchCV(estimator=clf_validation, param_grid=params, n_jobs=3)
-    grid_clf.fit(training_set[:,:-1], training_set[:,-1])
-    print grid_clf
-    validation_accuracy = grid_clf.score(validation_set[:,:-1],validation_set[:,-1])
-    print "validation accuracy is ", validation_accuracy
+    data = np.concatenate((training_data, validation_data), axis=0)
+    labels = np.concatenate([training_labels, validation_labels])
+    train_indices = range(len(training_data))
+    validation_indices = range(len(training_data),len(validation_data)+len(training_data))
+    print train_indices, validation_indices
+    print len(training_data),len(validation_data)
+    print len(data),len(labels)
+    print data.shape,labels.shape
+    clf_validation = svm.SVC(C=1,decision_function_shape='ovo',kernel='linear')
+    grid_clf = GridSearchCV(estimator=clf_validation, param_grid=params,cv=zip(train_indices,validation_indices))
+    grid_clf.fit(data,labels)
     c = grid_clf.best_estimator_.C
-    print c
+
 
     '''
     #training accuracy
