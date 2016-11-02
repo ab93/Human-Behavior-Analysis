@@ -80,9 +80,11 @@ def calculate_t(x, y, feature_name):
         temp_df = z.get_group(key)
         data.append(temp_df.iloc[:,0].values)
 
-    ans_neg_neu=stats.ttest_ind(data[0], data[1], 0)
-    ans_neu_pos=stats.ttest_ind(data[1], data[2], 0)
-    ans_neg_pos=stats.ttest_ind(data[0], data[2], 0)
+    print data[1]
+    print data[2]
+    ans_neg_neu=stats.ttest_ind(data[0], data[1], None, False)
+    ans_neu_pos=stats.ttest_ind(data[1], data[2], None, False)
+    ans_neg_pos=stats.ttest_ind(data[0], data[2], None, False)
 
     print ans_neg_neu, ans_neu_pos, ans_neg_pos
     with open('../results/t_test_results.dat','a') as f:
@@ -143,8 +145,8 @@ if __name__ == '__main__':
     feature_file = sys.argv[1]
     feat_df, excel_df = get_data(feature_file, feature_name)
     #plot_box(feat_df, excel_df, feature_name)
-    #calculate_anova(feat_df, excel_df, feature_name)
+    calculate_anova(feat_df, excel_df, feature_name)
     #plot_histogram(feat_df, excel_df, feature_name)
     #calculate_stat_scores(feat_df, excel_df, feature_name)
-    calculate_t(feat_df, excel_df, feature_name)
+    #calculate_t(feat_df, excel_df, feature_name)
 
