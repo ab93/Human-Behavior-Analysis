@@ -9,9 +9,10 @@ import random
 ANNOT_FILE_PATH = '../data/sentimentAnnotations_rev_v03.xlsx'
 ACOUSTIC_FILE_PATH = '../results/acou_mean.csv'
 VISUAL_FILE_PATH = '../results/okao_mean.csv'
+SHORE_FILE_PATH = '../results/shore_mean.csv'
   
 
-def split_data(exp=0):
+def split_data(exp=1):
     df = pd.read_excel(ANNOT_FILE_PATH, sheetname='Sheet1')
     grouped = df.groupby('video')
     data = grouped.groups.items()
@@ -37,15 +38,23 @@ def fuse_features():
     labels_df = labels_df['majority vote']
 
     acou_feat_df = pd.read_csv(ACOUSTIC_FILE_PATH)
-    acou_feat_df = acou_feat_df[['naq','frequency','energy']]
-
+    #acou_feat_df = acou_feat_df[['naq','frequency','energy']]
     acou_feat_df = acou_feat_df.replace([np.inf, -np.inf], np.nan)
     acou_feat_df = acou_feat_df.apply(lambda x: x.fillna(x.mean()),axis=0)
 
     visual_feat_df = pd.read_csv(VISUAL_FILE_PATH)
-    visual_feat_df = visual_feat_df[['face_up_down','mouth_open','smile_level']]
+    #visual_feat_df = visual_feat_df[['face_up_down','mouth_open','smile_level']]
 
-    return pd.concat([acou_feat_df, visual_feat_df, labels_df], axis=1)
+    shore_feat_df = pd.read_csv(SHORE_FILE_PATH)
+    shore_feat_df = shore_feat_df[['Sad', 'LeftEyeClosed', 'Happy']]
+
+    pd.concat([acou_feat_df, visual_feat_df, shore_feat_df, labels_df], axis=1)
+
+    full_data = pd.concat([ labels_df, acou_feat_df, shore_feat_df], axis=1)
+    full_data.to_csv("../results/full_data.csv", index=False)
+
+    return pd.concat([acou_feat_df, shore_feat_df, labels_df], axis=1)
+    #return pd.concat([acou_feat_df, visual_feat_df, shore_feat_df, labels_df], axis=1)
 
 def get_values(training_set,validation_set,test_set):
     
@@ -57,37 +66,41 @@ def get_values(training_set,validation_set,test_set):
     validation_labels = validation_set[:,-1]
     testing_data = test_set[:,:-1]
     testing_labels = test_set[:,-1]
-    params = {'C': [0.001,0.01,1,10,100]}
+
+    print "train:",training_data.shape
+    print "val:",validation_data.shape
+    print "test:",testing_data.shape
+
+    params = {'C': [0.001,0.01,1,10,100,1000]}
     data = np.concatenate((training_data, validation_data), axis=0)
+    print "data:",data.shape
     labels = np.concatenate([training_labels, validation_labels])
     train_indices = range(len(training_data))
     validation_indices = range(len(training_data),len(validation_data)+len(training_data))
-    # print train_indices, validation_indices
-    # print len(training_data),len(validation_data)
-    # print len(data),len(labels)
-    # print data.shape,labels.shape
-    clf_find_c = svm.SVC(decision_function_shape='ovr',kernel='linear')
-    grid_clf = GridSearchCV(estimator=clf_find_c, param_grid=params,cv=[(train_indices,validation_indices)])
+
+    #clf_find_c = svm.SVC(decision_function_shape='ovr',kernel='rbf')
+    clf_find_c = svm.LinearSVC(dual=True, penalty='l2')
+    grid_clf = GridSearchCV(estimator=clf_find_c, n_jobs=-1, param_grid=params,cv=[(train_indices,validation_indices)])
     grid_clf.fit(data,labels)
     c = grid_clf.best_estimator_.C
     print c
 
     #train accuracy
-    best_clf = svm.SVC(C=c,decision_function_shape='ovr',kernel='linear')
+    #best_clf = svm.SVC(C=c,decision_function_shape='ovr',kernel='linear')
+    best_clf = svm.LinearSVC(C=c, dual=True)
     best_clf.fit(data,labels)
     training_accuracy = best_clf.score(data,labels)
-    print training_accuracy
+    print "training accuracy:", training_accuracy
 
     #validation accuracy
 
     validation_accuracy = best_clf.score(validation_data,validation_labels)
-    print validation_accuracy
-
+    print "validation accuracy:", validation_accuracy
 
     #test accuracy
 
     testing_accuracy = best_clf.score(testing_data,testing_labels)
-    print testing_accuracy
+    print "testing accuracy:", testing_accuracy
 
 
 def model():
