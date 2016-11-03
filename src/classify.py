@@ -87,6 +87,35 @@ def fuse_features():
     return pd.concat([acou_feat_df, visual_feat_df, shore_feat_df, labels_df], axis=1)
     #return pd.concat([acou_feat_df, visual_feat_df, shore_feat_df, labels_df], axis=1)
 
+def get_acou_features():
+
+    labels_df = pd.read_excel(ANNOT_FILE_PATH, sheetname='Sheet1')
+    labels_df = labels_df['majority vote']
+
+    acou_feat_df = pd.read_csv(ACOUSTIC_FILE_PATH)
+    acou_feat_df = acou_feat_df.drop('polarity', 1)
+    acou_feat_df = acou_feat_df[['naq', 'v_u', 'energy']]
+    # acou_feat_df = acou_feat_df[['naq']]
+    acou_feat_df = acou_feat_df.replace([np.inf, -np.inf], np.nan)
+    acou_feat_df = acou_feat_df.apply(lambda x: x.fillna(x.mean()), axis=0)
+    return pd.concat([acou_feat_df,labels_df],axis = 1)
+
+def get_visual_featues():
+
+    labels_df = pd.read_excel(ANNOT_FILE_PATH, sheetname='Sheet1')
+    labels_df = labels_df['majority vote']
+
+    visual_feat_df = pd.read_csv(VISUAL_FILE_PATH)
+    #visual_feat_df = visual_feat_df[['face_up_down','mouth_open','smile_level']]
+    visual_feat_df = visual_feat_df[['mouth_open']]
+
+    shore_feat_df = pd.read_csv(SHORE_FILE_PATH)
+    shore_feat_df = shore_feat_df.drop('Video', 1)
+    shore_feat_df = shore_feat_df[['LeftEyeClosed', 'Angry']]
+    # shore_feat_df = shore_feat_df[['LeftEyeClosed', 'Happy']]
+
+    return pd.concat([visual_feat_df, shore_feat_df, labels_df], axis=1)
+
 def get_values(training_set,validation_set,test_set, val='hold'):
     
     #find value of C
@@ -98,13 +127,13 @@ def get_values(training_set,validation_set,test_set, val='hold'):
     testing_data = test_set[:,:-1]
     testing_labels = test_set[:,-1]
 
-    print "train:",training_data.shape
-    print "val:",validation_data.shape
-    print "test:",testing_data.shape
+    # print "train:",training_data.shape
+    # print "val:",validation_data.shape
+    # print "test:",testing_data.shape
 
     params = {'C': [0.001,0.01,1,10,100,1000]}
     data = np.concatenate((training_data, validation_data), axis=0)
-    print "data:",data.shape
+    #print "data:",data.shape
     labels = np.concatenate([training_labels, validation_labels])
     train_indices = range(len(training_data))
     validation_indices = range(len(training_data),len(validation_data)+len(training_data))
@@ -116,6 +145,8 @@ def get_values(training_set,validation_set,test_set, val='hold'):
         grid_clf = GridSearchCV(estimator=clf_find_c, n_jobs=-1, param_grid=params,cv=[(train_indices,validation_indices)])
     else:
         grid_clf = GridSearchCV(estimator=clf_find_c, n_jobs=-1, param_grid=params,cv=3)
+
+
     
     plot_validation_curve(data, labels, svm.LinearSVC(dual=False), cv=[(train_indices,validation_indices)], 
                             param_name="C", param_range=params['C'])
@@ -134,21 +165,29 @@ def get_values(training_set,validation_set,test_set, val='hold'):
     best_clf = svm.LinearSVC(C=c, dual=False)
     best_clf.fit(data,labels)
     training_accuracy = best_clf.score(data,labels)
-    print "training accuracy:", training_accuracy
+   # print "training accuracy:", training_accuracy
 
     #validation accuracy
 
     validation_accuracy = best_clf.score(validation_data,validation_labels)
-    print "validation accuracy:", validation_accuracy
+    #print "validation accuracy:", validation_accuracy
 
     #test accuracy
 
     testing_accuracy = best_clf.score(testing_data,testing_labels)
     print "testing accuracy:", testing_accuracy
 
+    return testing_accuracy
 
-def model():
-    df = fuse_features()
+def model(exp):
+    temp = []
+    if exp == "Exp 1":
+        df = fuse_features()
+    elif exp == "Exp 2 a":
+        df = get_acou_features()
+    elif exp == "Exp 2 b":
+        df = get_visual_featues()
+
     for i in range(4):
         print "\nExperiment " + str(i) 
         train_idx, val_idx, test_idx = split_data(i)
@@ -166,10 +205,12 @@ def model():
         test_set = pd.concat([test_features, test_labels], axis=1)
 
         print "\nHold-out:"
-        get_values(training_set.values, validaition_set.values, test_set.values, val='hold')
+        temp.append(get_values(training_set.values, validaition_set.values, test_set.values, val='hold'))
+        if exp == "Exp 1":
+            print "\n3-Fold:"
+            get_values(training_set.values, validaition_set.values, test_set.values, val='3fold')
 
-        print "\n3-Fold:"
-        get_values(training_set.values, validaition_set.values, test_set.values, val='3fold')
+    return temp
     
 
 
@@ -188,10 +229,20 @@ def model():
     
     '''
 
-
+def draw_multi_plots(acou_accuracy_list,visual_accuracy_list):
+    print acou_accuracy_list
+    print visual_accuracy_list
+    plt.plot([1,2,3,4],acou_accuracy_list, 'r-')
+    plt.plot([1,2,3,4],visual_accuracy_list,'b-')
+    plt.axis([0, 5, 0,1])
+    plt.show()
 
 
 
 
 if __name__ == '__main__':
-    model()
+    model("Exp 1")
+    acoustic = model("Exp 2 a")
+    visual = model("Exp 2 b")
+    draw_multi_plots(acoustic,visual)
+
