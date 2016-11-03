@@ -89,9 +89,9 @@ def get_values(training_set,validation_set,test_set, val='hold'):
     else:
         grid_clf = GridSearchCV(estimator=clf_find_c, n_jobs=-1, param_grid=params,cv=3)
     
-    scaler = preprocessing.StandardScaler().fit(data)
-    data = scaler.transform(data)
-    testing_data = scaler.transform(testing_data)
+    #scaler = preprocessing.StandardScaler().fit(data)
+    #data = scaler.transform(data)
+    #testing_data = scaler.transform(testing_data)
     #print train_features[:,0].shape
     #raw_input()
 
@@ -140,13 +140,6 @@ def model():
 
         print "\n3-Fold:"
         get_values(training_set.values, validaition_set.values, test_set.values, val='3fold')
-
-        #scaler = preprocessing.StandardScaler().fit(train_features)
-        #x_train = scaler.transform(train_features)
-        #x_val = scaler.transform(val_features)
-        #print train_features[:,0].shape
-        #raw_input()
-
     
 
 
@@ -163,16 +156,6 @@ def model():
     plt.yticks(())
     #plt.show()
     
-
-    clf = svm.SVC(C=1)
-    #clf = svm.LinearSVC(C=0.1, dual=False, multi_class='ovr',)
-    #clf = RandomForestClassifier()
-    clf.fit(train_features, train_labels)
-    print clf.predict(val_features)
-    print val_labels
-    #print train_labels
-
-    print clf.score(val_features, val_labels)
     '''
 
 
