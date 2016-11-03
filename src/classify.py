@@ -38,25 +38,28 @@ def fuse_features():
     labels_df = labels_df['majority vote']
 
     acou_feat_df = pd.read_csv(ACOUSTIC_FILE_PATH)
-    #acou_feat_df = acou_feat_df[['naq','frequency','energy']]
+    acou_feat_df = acou_feat_df.drop('polarity',1)
+    acou_feat_df = acou_feat_df[['naq','v_u','energy']]
+    #acou_feat_df = acou_feat_df[['naq']]
     acou_feat_df = acou_feat_df.replace([np.inf, -np.inf], np.nan)
     acou_feat_df = acou_feat_df.apply(lambda x: x.fillna(x.mean()),axis=0)
 
     visual_feat_df = pd.read_csv(VISUAL_FILE_PATH)
     #visual_feat_df = visual_feat_df[['face_up_down','mouth_open','smile_level']]
+    visual_feat_df = visual_feat_df[['mouth_open']]
 
     shore_feat_df = pd.read_csv(SHORE_FILE_PATH)
-    shore_feat_df = shore_feat_df[['Sad', 'LeftEyeClosed', 'Happy']]
+    shore_feat_df = shore_feat_df.drop('Video',1)
+    shore_feat_df = shore_feat_df[['LeftEyeClosed', 'Angry']]
+    #shore_feat_df = shore_feat_df[['LeftEyeClosed', 'Happy']]
 
-    pd.concat([acou_feat_df, visual_feat_df, shore_feat_df, labels_df], axis=1)
+    #full_data = pd.concat([acou_feat_df, shore_feat_df, visual_feat_df, labels_df], axis=1)
+    #full_data.to_csv("../results/full_data.csv", index=False)
 
-    full_data = pd.concat([ labels_df, acou_feat_df, shore_feat_df], axis=1)
-    full_data.to_csv("../results/full_data.csv", index=False)
-
-    return pd.concat([acou_feat_df, shore_feat_df, labels_df], axis=1)
+    return pd.concat([acou_feat_df, visual_feat_df, shore_feat_df, labels_df], axis=1)
     #return pd.concat([acou_feat_df, visual_feat_df, shore_feat_df, labels_df], axis=1)
 
-def get_values(training_set,validation_set,test_set):
+def get_values(training_set,validation_set,test_set, val='hold'):
     
     #find value of C
 
@@ -79,15 +82,26 @@ def get_values(training_set,validation_set,test_set):
     validation_indices = range(len(training_data),len(validation_data)+len(training_data))
 
     #clf_find_c = svm.SVC(decision_function_shape='ovr',kernel='rbf')
-    clf_find_c = svm.LinearSVC(dual=True, penalty='l2')
-    grid_clf = GridSearchCV(estimator=clf_find_c, n_jobs=-1, param_grid=params,cv=[(train_indices,validation_indices)])
+    clf_find_c = svm.LinearSVC(dual=False, penalty='l2')
+    
+    if val == "hold":
+        grid_clf = GridSearchCV(estimator=clf_find_c, n_jobs=-1, param_grid=params,cv=[(train_indices,validation_indices)])
+    else:
+        grid_clf = GridSearchCV(estimator=clf_find_c, n_jobs=-1, param_grid=params,cv=3)
+    
+    scaler = preprocessing.StandardScaler().fit(data)
+    data = scaler.transform(data)
+    testing_data = scaler.transform(testing_data)
+    #print train_features[:,0].shape
+    #raw_input()
+
     grid_clf.fit(data,labels)
     c = grid_clf.best_estimator_.C
     print c
 
     #train accuracy
     #best_clf = svm.SVC(C=c,decision_function_shape='ovr',kernel='linear')
-    best_clf = svm.LinearSVC(C=c, dual=True)
+    best_clf = svm.LinearSVC(C=c, dual=False)
     best_clf.fit(data,labels)
     training_accuracy = best_clf.score(data,labels)
     print "training accuracy:", training_accuracy
@@ -105,27 +119,33 @@ def get_values(training_set,validation_set,test_set):
 
 def model():
     df = fuse_features()
-    train_idx, val_idx, test_idx = split_data()
+    for i in range(4):
+        print "\nExperiment " + str(i) 
+        train_idx, val_idx, test_idx = split_data(i)
 
-    train_features = df.iloc[train_idx,:-1]
-    train_labels = df.iloc[train_idx,-1]
-    training_set = pd.concat([train_features, train_labels], axis=1)
+        train_features = df.iloc[train_idx,:-1]
+        train_labels = df.iloc[train_idx,-1]
+        training_set = pd.concat([train_features, train_labels], axis=1)
 
-    val_features = df.iloc[val_idx,:-1]
-    val_labels = df.iloc[val_idx,-1]
-    validaition_set = pd.concat([val_features, val_labels], axis=1)
+        val_features = df.iloc[val_idx,:-1]
+        val_labels = df.iloc[val_idx,-1]
+        validaition_set = pd.concat([val_features, val_labels], axis=1)
 
-    test_features = df.iloc[test_idx,:-1]
-    test_labels = df.iloc[test_idx,-1]
-    test_set = pd.concat([test_features, test_labels], axis=1)
+        test_features = df.iloc[test_idx,:-1]
+        test_labels = df.iloc[test_idx,-1]
+        test_set = pd.concat([test_features, test_labels], axis=1)
 
-    get_values(training_set.values, validaition_set.values, test_set.values)
+        print "\nHold-out:"
+        get_values(training_set.values, validaition_set.values, test_set.values, val='hold')
 
-    #scaler = preprocessing.StandardScaler().fit(train_features)
-    #x_train = scaler.transform(train_features)
-    #x_val = scaler.transform(val_features)
-    #print train_features[:,0].shape
-    #raw_input()
+        print "\n3-Fold:"
+        get_values(training_set.values, validaition_set.values, test_set.values, val='3fold')
+
+        #scaler = preprocessing.StandardScaler().fit(train_features)
+        #x_train = scaler.transform(train_features)
+        #x_val = scaler.transform(val_features)
+        #print train_features[:,0].shape
+        #raw_input()
 
     
 
