@@ -3,6 +3,7 @@ import pandas as pd
 from sklearn import svm, preprocessing
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import validation_curve
 import matplotlib.pyplot as plt
 import random
 
@@ -11,6 +12,33 @@ ACOUSTIC_FILE_PATH = '../results/acou_mean.csv'
 VISUAL_FILE_PATH = '../results/okao_mean.csv'
 SHORE_FILE_PATH = '../results/shore_mean.csv'
   
+def plot_validation_curve(X, y, clf, cv, param_name, param_range):
+    train_scores, test_scores = validation_curve(clf, X, y, 
+                                param_name=param_name, param_range=param_range,
+                                cv=cv, n_jobs=-1)
+    train_scores_mean = np.mean(train_scores, axis=1)
+    train_scores_std = np.std(train_scores, axis=1)
+    test_scores_mean = np.mean(test_scores, axis=1)
+    test_scores_std = np.std(test_scores, axis=1)
+
+    plt.title("Validation Curve with SVM")
+    plt.xlabel("C")
+    plt.ylabel("Score")
+    plt.ylim(0.0, 1.1)
+    lw = 2
+    plt.semilogx(param_range, train_scores_mean, label="Training score",
+                color="darkorange", lw=lw)
+    plt.fill_between(param_range, train_scores_mean - train_scores_std,
+                    train_scores_mean + train_scores_std, alpha=0.2,
+                    color="darkorange", lw=lw)
+    plt.semilogx(param_range, test_scores_mean, label="Cross-validation score",
+                color="navy", lw=lw)
+    plt.fill_between(param_range, test_scores_mean - test_scores_std,
+                    test_scores_mean + test_scores_std, alpha=0.2,
+                    color="navy", lw=lw)
+    plt.legend(loc="best")
+    plt.show()
+    
 
 def split_data(exp=1):
     df = pd.read_excel(ANNOT_FILE_PATH, sheetname='Sheet1')
@@ -89,6 +117,8 @@ def get_values(training_set,validation_set,test_set, val='hold'):
     else:
         grid_clf = GridSearchCV(estimator=clf_find_c, n_jobs=-1, param_grid=params,cv=3)
     
+    plot_validation_curve(data, labels, svm.LinearSVC(dual=False), cv=[(train_indices,validation_indices)], 
+                            param_name="C", param_range=params['C'])
     #scaler = preprocessing.StandardScaler().fit(data)
     #data = scaler.transform(data)
     #testing_data = scaler.transform(testing_data)
@@ -97,7 +127,7 @@ def get_values(training_set,validation_set,test_set, val='hold'):
 
     grid_clf.fit(data,labels)
     c = grid_clf.best_estimator_.C
-    print c
+    print "C:",c
 
     #train accuracy
     #best_clf = svm.SVC(C=c,decision_function_shape='ovr',kernel='linear')
