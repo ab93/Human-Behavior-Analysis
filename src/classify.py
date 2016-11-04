@@ -12,7 +12,7 @@ ACOUSTIC_FILE_PATH = '../results/acou_mean.csv'
 VISUAL_FILE_PATH = '../results/okao_mean.csv'
 SHORE_FILE_PATH = '../results/shore_mean.csv'
   
-def plot_validation_curve(X, y, clf, cv, param_name, param_range):
+def plot_validation_curve(X, y, clf, cv, param_name, param_range, title=''):
     train_scores, test_scores = validation_curve(clf, X, y, 
                                 param_name=param_name, param_range=param_range,
                                 cv=cv, n_jobs=-1)
@@ -21,7 +21,8 @@ def plot_validation_curve(X, y, clf, cv, param_name, param_range):
     test_scores_mean = np.mean(test_scores, axis=1)
     test_scores_std = np.std(test_scores, axis=1)
 
-    plt.title("Validation Curve with SVM")
+    fig = plt.figure()
+    plt.title("Validation Curve (Linear SVM) " + title)
     plt.xlabel("C")
     plt.ylabel("Score")
     plt.ylim(0.0, 1.1)
@@ -37,8 +38,8 @@ def plot_validation_curve(X, y, clf, cv, param_name, param_range):
                     test_scores_mean + test_scores_std, alpha=0.2,
                     color="navy", lw=lw)
     plt.legend(loc="best")
-    plt.show()
-    
+    #plt.show()
+    fig.savefig('../plots/val_curve/VC_'+title+'.png')
 
 def split_data(exp=1):
     df = pd.read_excel(ANNOT_FILE_PATH, sheetname='Sheet1')
@@ -116,9 +117,10 @@ def get_visual_featues():
 
     return pd.concat([visual_feat_df, shore_feat_df, labels_df], axis=1)
 
-def get_values(training_set,validation_set,test_set, val='hold'):
+
+def get_values(training_set,validation_set,test_set, exp_no, val='hold'):
     
-    #find value of C
+    # find value of C
 
     training_data = training_set[:,:-1]
     training_labels = training_set[:,-1]
@@ -143,19 +145,14 @@ def get_values(training_set,validation_set,test_set, val='hold'):
     
     if val == "hold":
         grid_clf = GridSearchCV(estimator=clf_find_c, n_jobs=-1, param_grid=params,cv=[(train_indices,validation_indices)])
+        plot_validation_curve(data, labels, svm.LinearSVC(dual=False), cv=[(train_indices,validation_indices)], 
+                            param_name="C", param_range=params['C'], title=('hold' + exp_no))
     else:
         grid_clf = GridSearchCV(estimator=clf_find_c, n_jobs=-1, param_grid=params,cv=3)
-
-
+        plot_validation_curve(data, labels, svm.LinearSVC(dual=False), cv=3, 
+                            param_name="C", param_range=params['C'], title=('3-fold' + exp_no))
     
-    plot_validation_curve(data, labels, svm.LinearSVC(dual=False), cv=[(train_indices,validation_indices)], 
-                            param_name="C", param_range=params['C'])
-    #scaler = preprocessing.StandardScaler().fit(data)
-    #data = scaler.transform(data)
-    #testing_data = scaler.transform(testing_data)
-    #print train_features[:,0].shape
-    #raw_input()
-
+    
     grid_clf.fit(data,labels)
     c = grid_clf.best_estimator_.C
     print "C:",c
@@ -205,29 +202,13 @@ def model(exp):
         test_set = pd.concat([test_features, test_labels], axis=1)
 
         print "\nHold-out:"
-        temp.append(get_values(training_set.values, validaition_set.values, test_set.values, val='hold'))
+        temp.append(get_values(training_set.values, validaition_set.values, test_set.values, str(i+1), val='hold' ))
         if exp == "Exp 1":
             print "\n3-Fold:"
-            get_values(training_set.values, validaition_set.values, test_set.values, val='3fold')
+            get_values(training_set.values, validaition_set.values, test_set.values, str(i+1), val='3-fold')
 
     return temp
-    
 
-
-    '''
-    plt.figure(2, figsize=(8, 6))
-    plt.scatter(train_features[:, 0], train_features[:, 1], c=train_labels, cmap=plt.cm.Paired)
-    plt.xlabel('naq')
-    plt.ylabel('mouth_open')
-    
-
-    #plt.xlim(x_min, x_max)
-    #plt.ylim(y_min, y_max)
-    plt.xticks(())
-    plt.yticks(())
-    #plt.show()
-    
-    '''
 
 def draw_multi_plots(acou_accuracy_list,visual_accuracy_list):
     print acou_accuracy_list
@@ -238,11 +219,9 @@ def draw_multi_plots(acou_accuracy_list,visual_accuracy_list):
     plt.show()
 
 
-
-
 if __name__ == '__main__':
     model("Exp 1")
-    acoustic = model("Exp 2 a")
-    visual = model("Exp 2 b")
-    draw_multi_plots(acoustic,visual)
+    #acoustic = model("Exp 2 a")
+    #visual = model("Exp 2 b")
+    #draw_multi_plots(acoustic,visual)
 
