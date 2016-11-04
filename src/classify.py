@@ -118,7 +118,7 @@ def get_visual_featues():
     return pd.concat([visual_feat_df, shore_feat_df, labels_df], axis=1)
 
 
-def get_values(training_set,validation_set,test_set, exp_no, val='hold'):
+def get_values(training_set,validation_set,test_set, exp_no, val='hold', VC=True):
     
     # find value of C
 
@@ -145,11 +145,13 @@ def get_values(training_set,validation_set,test_set, exp_no, val='hold'):
     
     if val == "hold":
         grid_clf = GridSearchCV(estimator=clf_find_c, n_jobs=-1, param_grid=params,cv=[(train_indices,validation_indices)])
-        plot_validation_curve(data, labels, svm.LinearSVC(dual=False), cv=[(train_indices,validation_indices)], 
+        if VC:
+            plot_validation_curve(data, labels, svm.LinearSVC(dual=False), cv=[(train_indices,validation_indices)], 
                             param_name="C", param_range=params['C'], title=('hold' + exp_no))
     else:
         grid_clf = GridSearchCV(estimator=clf_find_c, n_jobs=-1, param_grid=params,cv=3)
-        plot_validation_curve(data, labels, svm.LinearSVC(dual=False), cv=3, 
+        if VC:
+            plot_validation_curve(data, labels, svm.LinearSVC(dual=False), cv=3, 
                             param_name="C", param_range=params['C'], title=('3-fold' + exp_no))
     
     
@@ -167,31 +169,120 @@ def get_values(training_set,validation_set,test_set, exp_no, val='hold'):
     training_accuracy = best_clf.score(data,labels)
     print "training accuracy:", training_accuracy
 
-    #validation accuracy
-
-    #validation_accuracy = best_clf.score(validation_data,validation_labels)
-    #print "validation accuracy:", validation_accuracy
-
     #test accuracy
-    #best_clf.fit(data, labels)
+    
     testing_accuracy = best_clf.score(testing_data,testing_labels)
     print "testing accuracy:", testing_accuracy
     
     return (training_accuracy, validation_accuracy, testing_accuracy)
 
-def plot_val_test(scores, title):
+
+def get_svm_rbf_values(training_set,validation_set,test_set):
+    training_data = training_set[:,:-1]
+    training_labels = training_set[:,-1]
+    validation_data = validation_set[:,:-1]
+    validation_labels = validation_set[:,-1]
+    testing_data = test_set[:,:-1]
+    testing_labels = test_set[:,-1]
+
+    param_grid = {'C':[0.001,0.01,1,10,100,1000], 'gamma': np.logspace(-3,3,6)}
+
+    data = np.concatenate((training_data, validation_data), axis=0)
+    #print "data:",data.shape
+    labels = np.concatenate([training_labels, validation_labels])
+    train_indices = range(len(training_data))
+    validation_indices = range(len(training_data),len(validation_data)+len(training_data))
+
+    clf_rf = svm.SVC()
+    
+    grid_clf = GridSearchCV(estimator=clf_rf, n_jobs=-1, param_grid=param_grid,cv=[(train_indices,validation_indices)])
+        
+    grid_clf.fit(data,labels)
+    print "\nSVM RBF:"
+    print grid_clf.best_params_
+    validation_accuracy = grid_clf.best_score_
+    print "validation_accuracy:", validation_accuracy
+
+    #train accuracy
+    
+    best_clf = grid_clf.best_estimator_
+    best_clf.fit(data,labels)
+    training_accuracy = best_clf.score(data,labels)
+    print "training accuracy:", training_accuracy
+
+    #test accuracy
+    testing_accuracy = best_clf.score(testing_data,testing_labels)
+    print "testing accuracy:", testing_accuracy
+    return (training_accuracy, validation_accuracy, testing_accuracy)
+
+
+def get_rf_values(training_set,validation_set,test_set):
+    training_data = training_set[:,:-1]
+    training_labels = training_set[:,-1]
+    validation_data = validation_set[:,:-1]
+    validation_labels = validation_set[:,-1]
+    testing_data = test_set[:,:-1]
+    testing_labels = test_set[:,-1]
+
+    param_grid = {"max_depth": [3, None],
+              "max_features": [1, 3, 6],
+              "min_samples_split": [1, 3, 10],
+              "min_samples_leaf": [1, 3, 10],
+              "criterion": ["gini", "entropy"]}
+
+    data = np.concatenate((training_data, validation_data), axis=0)
+    #print "data:",data.shape
+    labels = np.concatenate([training_labels, validation_labels])
+    train_indices = range(len(training_data))
+    validation_indices = range(len(training_data),len(validation_data)+len(training_data))
+
+    clf_rf = RandomForestClassifier()
+    
+    grid_clf = GridSearchCV(estimator=clf_rf, n_jobs=-1, param_grid=param_grid,cv=[(train_indices,validation_indices)])
+        
+    grid_clf.fit(data,labels)
+    print "\nRandom Forests:"
+    print grid_clf.best_params_
+    validation_accuracy = grid_clf.best_score_
+    print "validation_accuracy:", validation_accuracy
+
+    #train accuracy
+    
+    best_clf = grid_clf.best_estimator_
+    best_clf.fit(data,labels)
+    training_accuracy = best_clf.score(data,labels)
+    print "training accuracy:", training_accuracy
+
+    #test accuracy
+    testing_accuracy = best_clf.score(testing_data,testing_labels)
+    print "testing accuracy:", testing_accuracy
+    return (training_accuracy, validation_accuracy, testing_accuracy)
+
+def plot_val_test(scores, title, filename):
     val_scores = [score[1] for score in scores]
     test_scores = [score[2] for score in scores]
+    plt.clf()
+    plt.close()
     fig = plt.figure()
-    plt.title = title
+    plt.title(title)
+    plt.xlabel("Test Folds ID")
+    plt.ylabel("Accuracy")
+    plt.ylim(0.0,1.1)
+    plt.xlim(0,5)
+    plt.xticks(np.arange(0,6))
+    plt.plot(np.arange(1,5), val_scores, 'o-', label="Validation Scores", color='red')
+    plt.plot(np.arange(1,5), test_scores, 'o-', label="Test Scores", color='blue')
+    plt.legend(loc='best')
+    fig.savefig('../plots/val_test/' + filename + '.png')
     
     
-    
-
 
 def model(exp):
     hold_out_scores = []
     fold_scores = []
+    rbf_scores = []
+    rf_scores = []
+
     if exp == "Exp 1":
         df = fuse_features()
     elif exp == "Exp 2 a":
@@ -217,13 +308,21 @@ def model(exp):
 
         print "\nHold-out:"
         hold_out_scores.append(get_values(training_set.values, validaition_set.values, test_set.values, 
-                                str(i+1), val='hold' ))
+                                str(i+1), val='hold'))
+
+        rf_scores.append(get_rf_values(training_set.values, validaition_set.values, test_set.values))
+        #rbf_scores.append(get_values(training_set.values, validaition_set.values, test_set.values, 
+        #                        str(i+1), val='hold', VC=False))
+
+        rbf_scores.append(get_svm_rbf_values(training_set.values, validaition_set.values, test_set.values))
+
         if exp == "Exp 1":
             print "\n3-Fold:"
             fold_scores.append(get_values(training_set.values, validaition_set.values, test_set.values,
                              str(i+1), val='3-fold'))
 
-    plot_val_test(hold_out_scores, "Hold out scores")
+    plot_val_test(hold_out_scores, "Hold out scores", "hold_out")
+    plot_val_test(fold_scores, "3 fold scores", "3_fold")
     return hold_out_scores
 
 
