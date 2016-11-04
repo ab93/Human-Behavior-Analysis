@@ -154,30 +154,44 @@ def get_values(training_set,validation_set,test_set, exp_no, val='hold'):
     
     
     grid_clf.fit(data,labels)
+    validation_accuracy = grid_clf.best_score_
+    print "validation_accuracy:", validation_accuracy
     c = grid_clf.best_estimator_.C
     print "C:",c
 
     #train accuracy
-    #best_clf = svm.SVC(C=c,decision_function_shape='ovr',kernel='linear')
+    
     best_clf = svm.LinearSVC(C=c, dual=False)
     best_clf.fit(data,labels)
+    #best_clf.fit(training_data, training_labels)
     training_accuracy = best_clf.score(data,labels)
-   # print "training accuracy:", training_accuracy
+    print "training accuracy:", training_accuracy
 
     #validation accuracy
 
-    validation_accuracy = best_clf.score(validation_data,validation_labels)
+    #validation_accuracy = best_clf.score(validation_data,validation_labels)
     #print "validation accuracy:", validation_accuracy
 
     #test accuracy
-
+    #best_clf.fit(data, labels)
     testing_accuracy = best_clf.score(testing_data,testing_labels)
     print "testing accuracy:", testing_accuracy
+    
+    return (training_accuracy, validation_accuracy, testing_accuracy)
 
-    return testing_accuracy
+def plot_val_test(scores, title):
+    val_scores = [score[1] for score in scores]
+    test_scores = [score[2] for score in scores]
+    fig = plt.figure()
+    plt.title = title
+    
+    
+    
+
 
 def model(exp):
-    temp = []
+    hold_out_scores = []
+    fold_scores = []
     if exp == "Exp 1":
         df = fuse_features()
     elif exp == "Exp 2 a":
@@ -202,12 +216,15 @@ def model(exp):
         test_set = pd.concat([test_features, test_labels], axis=1)
 
         print "\nHold-out:"
-        temp.append(get_values(training_set.values, validaition_set.values, test_set.values, str(i+1), val='hold' ))
+        hold_out_scores.append(get_values(training_set.values, validaition_set.values, test_set.values, 
+                                str(i+1), val='hold' ))
         if exp == "Exp 1":
             print "\n3-Fold:"
-            get_values(training_set.values, validaition_set.values, test_set.values, str(i+1), val='3-fold')
+            fold_scores.append(get_values(training_set.values, validaition_set.values, test_set.values,
+                             str(i+1), val='3-fold'))
 
-    return temp
+    plot_val_test(hold_out_scores, "Hold out scores")
+    return hold_out_scores
 
 
 def draw_multi_plots(acou_accuracy_list,visual_accuracy_list):
