@@ -276,6 +276,28 @@ def plot_val_test(scores, title, filename):
     plt.legend(loc='best')
     fig.savefig('../plots/val_test/' + filename + '.png')
 
+def exp3_plot(lsvm_accuracies,gnb_accuracies,rbf_accuracies,rf_accuracies):
+    lsvm_accuracies = [score[2] for score in lsvm_accuracies]
+    rbf_accuracies = [score[2] for score in rbf_accuracies]
+    rf_accuracies = [score[2] for score in rf_accuracies]
+    plt.clf()
+    plt.close()
+    fig = plt.figure()
+    print gnb_accuracies
+    plt.title("Multiple classifiers")
+    plt.xlabel("Test Folds ID")
+    plt.ylabel("Accuracy")
+    plt.ylim(0.0, 1.1)
+    plt.xlim(0, 5)
+    plt.xticks(np.arange(0, 6))
+    plt.plot(np.arange(1, 5), lsvm_accuracies, 'o-', label="Linear SVM", color='red')
+    plt.plot(np.arange(1, 5), gnb_accuracies, 'o-', label="Gaussian Naive Bayes", color='blue')
+    plt.plot(np.arange(1, 5), rbf_accuracies, 'o-', label="SVM RBF kernel", color='green')
+    plt.plot(np.arange(1, 5), rf_accuracies, 'o-', label="Random Forest", color='orange')
+    plt.legend(loc='best')
+    fig.savefig('../plots/val_test/' + "multi_classifier" + '.png')
+
+
 def draw_multi_plots(multi_accuracy_list,acou_accuracy_list,visual_accuracy_list):
 
     acou_val_scores = [score[1] for score in acou_accuracy_list]
@@ -374,6 +396,8 @@ def Gaussian_NB(training_set,test_set):
     return testing_accuracy,test_predictions
 
 
+
+
 def model(exp):
     hold_out_scores = []
     fold_scores = []
@@ -411,25 +435,27 @@ def model(exp):
                                 str(i+1), val='hold')
         hold_out_scores.append(a)
         predictions.append(p)
-        temp_a,temp_p = Gaussian_NB(training_set.values,test_set.values)
-        gaussian_values.append(temp_a)
-        gaussian_predictions.append(temp_p)
-
-
-        rf_scores.append(get_rf_values(training_set.values, validaition_set.values, test_set.values))
-        rbf_scores.append(get_svm_rbf_values(training_set.values, validaition_set.values, test_set.values))
-
         if exp == "Exp 1":
             print "\n3-Fold:"
-            a,p = get_values(training_set.values, validaition_set.values, test_set.values,str(i+1), val='3-fold')
+            a, p = get_values(training_set.values, validaition_set.values, test_set.values, str(i + 1), val='3-fold')
             fold_scores.append(a)
+
+            temp_a,temp_p = Gaussian_NB(training_set.values,test_set.values)
+            gaussian_values.append(temp_a)
+            gaussian_predictions.append(temp_p)
+
+
+            rf_scores.append(get_rf_values(training_set.values, validaition_set.values, test_set.values))
+            rbf_scores.append(get_svm_rbf_values(training_set.values, validaition_set.values, test_set.values))
+
     if exp == "Exp 1":
         plot_val_test(fold_scores, "3 fold scores", "3_fold")
         print gaussian_values
         print t_test_values(np.concatenate(hold_out_scores).ravel().tolist(),
                       np.concatenate(gaussian_predictions).ravel().tolist())
+        exp3_plot(hold_out_scores,gaussian_values,rbf_scores,rf_scores)
 
-        raw_input()
+
 
 
     return hold_out_scores,predictions
@@ -451,4 +477,4 @@ if __name__ == '__main__':
     print "t scores"
     print t_test_values(np.concatenate(multimodal_predictions).ravel().tolist(), np.concatenate(acoustic_predictions).ravel().tolist())
     print t_test_values(np.concatenate(multimodal_predictions).ravel().tolist(),np.concatenate(visual_predictions).ravel().tolist())
-
+    print t_test_values(np.concatenate(acoustic_predictions).ravel().tolist(),np.concatenate(visual_predictions).ravel().tolist())
