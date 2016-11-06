@@ -3,7 +3,8 @@ import numpy as np
 import pandas as pd
 from sklearn import svm, preprocessing
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.grid_search import GridSearchCV
+#from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import validation_curve
 from sklearn.naive_bayes import GaussianNB
 import matplotlib.pyplot as plt
@@ -484,5 +485,5 @@ if __name__ == '__main__':
     multi_modal = model(data, "Exp_1")
     acoustic = model(data, "Exp_2a")
     visual = model(data, "Exp_2b")
-    model(data, "Exp_3")
+    #model(data, "Exp_3")
     draw_multi_plots(multi_modal,acoustic,visual)
