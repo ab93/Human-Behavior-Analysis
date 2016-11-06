@@ -9,19 +9,19 @@ import csv
 ANNOT_FILE_PATH = '../../Assignment_1/sentimentAnnotations_rev_v03.xlsx'
 
 def get_data(feature_file, feature_name):
-<<<<<<< HEAD
+
     excel_df = pd.read_excel(open(ANNOT_FILE_PATH,'rb'), sheetname='Sheet1')
-=======
+
     excel_df = pd.read_excel(open('../sentimentAnnotations_rev_v03.xlsx','rb'),
                             sheetname='Sheet1')
->>>>>>> 196eaa74af99480ae90d51edababbb7889743072
+
     excel_df = excel_df['majority vote']
     feat_df = pd.read_csv(feature_file)
     feat_df = feat_df[feature_name]
     return feat_df, excel_df
 
-<<<<<<< HEAD
-=======
+
+
 def plot_histogram(x, y, feature_name):
     classes = np.unique(y.values)[:-1]
     classes = map(np.int,classes)
@@ -38,7 +38,7 @@ def plot_histogram(x, y, feature_name):
 
     plt.hist(data[2],normed=True)
     plt.show()
->>>>>>> 196eaa74af99480ae90d51edababbb7889743072
+
 
 def calculate_stat_scores(x,y,feature_name):
     z = pd.concat([x,y], axis=1)
@@ -157,15 +157,14 @@ if __name__ == '__main__':
     feature_name = sys.argv[2]
     feature_file = sys.argv[1]
     feat_df, excel_df = get_data(feature_file, feature_name)
-<<<<<<< HEAD
+
     plot_box(feat_df, excel_df, feature_name)
     calculate_anova(feat_df, excel_df, feature_name)
     calculate_stat_scores(feat_df, excel_df, feature_name)
-=======
+
     #plot_box(feat_df, excel_df, feature_name)
     calculate_anova(feat_df, excel_df, feature_name)
     #plot_histogram(feat_df, excel_df, feature_name)
     #calculate_stat_scores(feat_df, excel_df, feature_name)
     #calculate_t(feat_df, excel_df, feature_name)
 
->>>>>>> 196eaa74af99480ae90d51edababbb7889743072
